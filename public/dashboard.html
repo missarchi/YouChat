@@ -20,195 +20,150 @@
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
         }
-        .profile-section {
-            display: flex;
-            gap: 2rem;
+        h1 {
+            text-align: center;
             margin-bottom: 2rem;
         }
-        .profile-photo {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #e6dbc7;
-        }
-        .profile-info {
-            flex: 1;
+        .profile-section {
+            margin-bottom: 2rem;
         }
         .form-group {
             margin-bottom: 1rem;
         }
-        input[type="text"], input[type="file"] {
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input[type="text"] {
             width: 100%;
             padding: 0.5rem;
-            margin-bottom: 1rem;
             border: 1px solid #e0d8c3;
             border-radius: 5px;
             background: #f9f6ef;
         }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
         button {
             padding: 0.7rem 1.5rem;
-            background: #e6dbc7;
-            color: #5a4a2d;
             border: none;
             border-radius: 5px;
-            font-size: 1rem;
             cursor: pointer;
+            font-size: 1rem;
             transition: background 0.2s;
         }
+        .save-btn {
+            background: #e6dbc7;
+            color: #5a4a2d;
+        }
+        .logout-btn {
+            background: #d4c4b5;
+            color: #5a4a2d;
+        }
         button:hover {
-            background: #d6c7a6;
+            opacity: 0.9;
         }
         .message {
-            color: #b94a48;
-            margin-bottom: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border-radius: 5px;
         }
         .success {
+            background: #dff0d8;
             color: #3c763d;
         }
-        #previewImage {
-            max-width: 100%;
-            margin-top: 10px;
+        .error {
+            background: #f2dede;
+            color: #a94442;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dashboard</h1>
+        <h1>Welcome to Your Dashboard</h1>
         <div class="profile-section">
-            <div>
-                <img id="profilePhoto" class="profile-photo" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Profile Photo">
-                <form id="photoForm" class="form-group">
-                    <input type="file" id="photoInput" accept="image/*" required>
-                    <button type="submit">Upload Photo</button>
-                </form>
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName" readonly>
             </div>
-            <div class="profile-info">
-                <h2>Profile Information</h2>
-                <form id="profileForm">
-                    <div class="form-group">
-                        <label for="displayName">Display Name:</label>
-                        <input type="text" id="displayName" name="displayName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="bio">Bio:</label>
-                        <input type="text" id="bio" name="bio">
-                    </div>
-                    <button type="submit">Save Profile</button>
-                </form>
-                <div id="message" class="message"></div>
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName" readonly>
             </div>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" readonly>
+            </div>
+        </div>
+        <div class="message" id="message"></div>
+        <div class="button-group">
+            <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <script>
-        let currentPhotoUrl = '';
-
-        // Preview image before upload
-        document.getElementById('photoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('profilePhoto').src = e.target.result;
-                }
-                reader.readAsDataURL(file);
+        // Check if user is logged in
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
             }
-        });
+            return token;
+        }
 
-        // Load profile data
-        async function loadProfile() {
+        // Get user data from token
+        function getUserFromToken() {
+            const token = checkAuth();
+            if (!token) return null;
+
             try {
-                const response = await fetch('/profile');
-                const data = await response.json();
-                if (response.ok) {
-                    document.getElementById('displayName').value = data.display_name || '';
-                    document.getElementById('bio').value = data.bio || '';
-                    if (data.photo_url) {
-                        document.getElementById('profilePhoto').src = data.photo_url;
-                        currentPhotoUrl = data.photo_url;
-                    }
-                }
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
             } catch (error) {
-                console.error('Error loading profile:', error);
+                console.error('Error parsing token:', error);
+                return null;
             }
         }
 
-        // Handle photo upload
-        document.getElementById('photoForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('photoInput');
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('photo', file);
-
-            try {
-                const response = await fetch('/upload-photo', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    currentPhotoUrl = data.photoUrl;
-                    document.getElementById('profilePhoto').src = data.photoUrl;
-                    document.getElementById('message').textContent = 'Photo uploaded successfully!';
-                    document.getElementById('message').className = 'message success';
-                    
-                    // Save profile with new photo URL
-                    await saveProfile();
-                } else {
-                    document.getElementById('message').textContent = data.message;
-                    document.getElementById('message').className = 'message';
-                }
-            } catch (error) {
-                console.error('Error uploading photo:', error);
-                document.getElementById('message').textContent = 'Error uploading photo';
-                document.getElementById('message').className = 'message';
-            }
-        };
-
-        // Save profile function
-        async function saveProfile() {
-            const formData = {
-                display_name: document.getElementById('displayName').value,
-                bio: document.getElementById('bio').value,
-                photo_url: currentPhotoUrl
-            };
-
-            try {
-                const response = await fetch('/profile', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                const data = await response.json();
-                const msg = document.getElementById('message');
-                if (response.ok) {
-                    msg.textContent = 'Profile updated successfully!';
-                    msg.className = 'message success';
-                } else {
-                    msg.textContent = data.message;
-                    msg.className = 'message';
-                }
-            } catch (error) {
-                console.error('Error updating profile:', error);
-                document.getElementById('message').textContent = 'Error updating profile';
-                document.getElementById('message').className = 'message';
+        // Load user data
+        function loadUserData() {
+            const userData = getUserFromToken();
+            if (userData) {
+                document.getElementById('firstName').value = userData.firstName || '';
+                document.getElementById('lastName').value = userData.lastName || '';
+                document.getElementById('username').value = userData.username || '';
             }
         }
 
-        // Handle profile form submission
-        document.getElementById('profileForm').onsubmit = async function(e) {
-            e.preventDefault();
-            await saveProfile();
-        };
+        // Save profile
+        function saveProfile() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'Profile saved successfully!';
+            messageDiv.className = 'message success';
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
+            }, 3000);
+        }
 
-        // Load profile when page loads
-        loadProfile();
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // Load user data when page loads
+        window.onload = loadUserData;
     </script>
 </body>
 </html> 

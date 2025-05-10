@@ -83,13 +83,14 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
-        password TEXT
+        password TEXT,
+        first_name TEXT,
+        last_name TEXT
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS profiles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER UNIQUE,
-        display_name TEXT,
         bio TEXT,
         photo_url TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -112,17 +113,19 @@ app.get('/dashboard', (req, res) => {
 
 // Register endpoint
 app.post('/register', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password required.' });
+  const { username, password, firstName, lastName } = req.body;
+  if (!username || !password || !firstName || !lastName) {
+    return res.status(400).json({ message: 'All fields are required.' });
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
-  db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], function(err) {
-    if (err) {
-      return res.status(400).json({ message: 'Username already exists.' });
-    }
-    res.json({ message: 'Registration successful!' });
-  });
+  db.run('INSERT INTO users (username, password, first_name, last_name) VALUES (?, ?, ?, ?)', 
+    [username, hashedPassword, firstName, lastName], 
+    function(err) {
+      if (err) {
+        return res.status(400).json({ message: 'Username already exists.' });
+      }
+      res.json({ message: 'Registration successful!' });
+    });
 });
 
 // Login endpoint
@@ -138,15 +141,24 @@ app.post('/login', (req, res) => {
     if (!bcrypt.compareSync(password, user.password)) {
       return res.status(400).json({ message: 'Invalid credentials.' });
     }
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ 
+      id: user.id, 
+      username: user.username,
+      firstName: user.first_name 
+    }, JWT_SECRET, { expiresIn: '1h' });
     res.json({ message: 'Login successful!', token });
   });
 });
 
 // Profile routes
-app.get('/profile', (req, res) => {
-    // Get the latest profile
-    db.get('SELECT * FROM profiles ORDER BY id DESC LIMIT 1', (err, profile) => {
+app.get('/profile', authenticateToken, (req, res) => {
+    // Get user profile with username
+    db.get(`
+        SELECT p.*, u.username 
+        FROM profiles p 
+        JOIN users u ON p.user_id = u.id 
+        WHERE u.id = ?
+    `, [req.user.id], (err, profile) => {
         if (err) {
             return res.status(500).json({ message: 'Error fetching profile' });
         }
