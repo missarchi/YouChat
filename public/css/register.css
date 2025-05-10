@@ -1,0 +1,141 @@
+.register-container {
+    background: #f5f5dc;
+    color: #5a4a2d;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.register-container .container {
+    background: #fffaf3;
+    padding: 2rem 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
+    min-width: 300px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.register-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.register-container input[type="text"],
+.register-container input[type="password"] {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e0d8c3;
+    border-radius: 5px;
+    background: #f9f6ef;
+}
+
+.register-container button {
+    width: 100%;
+    padding: 0.7rem;
+    background: #e6dbc7;
+    color: #5a4a2d;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.register-container button:hover {
+    background: #d6c7a6;
+}
+
+.register-container .link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: #5a4a2d;
+    text-decoration: none;
+}
+
+.register-container .link:hover {
+    text-decoration: underline;
+}
+
+.register-container .message {
+    color: #b94a48;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+@media screen and (max-width: 480px) {
+    .register-container .container {
+        padding: 1.2rem;
+        width: 85%;
+        margin: 0 10px;
+        min-width: 250px;
+    }
+    
+    .register-container h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .register-container input[type="text"],
+    .register-container input[type="password"] {
+        padding: 0.35rem;
+        margin-bottom: 0.6rem;
+        font-size: 0.9rem;
+    }
+    
+    .register-container button {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .register-container .link {
+        font-size: 0.85rem;
+        margin-top: 0.8rem;
+    }
+
+    .register-container .message {
+        font-size: 0.85rem;
+        margin-bottom: 0.8rem;
+    }
+}
+
+@media screen and (max-width: 320px) {
+    .register-container .container {
+        padding: 0.8rem;
+        width: 90%;
+        min-width: 200px;
+    }
+    
+    .register-container h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .register-container input[type="text"],
+    .register-container input[type="password"] {
+        padding: 0.3rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .register-container button {
+        padding: 0.4rem;
+        font-size: 0.85rem;
+    }
+
+    .register-container .link {
+        font-size: 0.8rem;
+        margin-top: 0.6rem;
+    }
+
+    .register-container .message {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+} 

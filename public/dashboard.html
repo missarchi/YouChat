@@ -4,85 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <style>
-        body {
-            background: #f5f5dc;
-            color: #5a4a2d;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fffaf3;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .profile-section {
-            margin-bottom: 2rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #e0d8c3;
-            border-radius: 5px;
-            background: #f9f6ef;
-        }
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        button {
-            padding: 0.7rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s;
-        }
-        .save-btn {
-            background: #e6dbc7;
-            color: #5a4a2d;
-        }
-        .logout-btn {
-            background: #d4c4b5;
-            color: #5a4a2d;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        .message {
-            text-align: center;
-            margin: 1rem 0;
-            padding: 0.5rem;
-            border-radius: 5px;
-        }
-        .success {
-            background: #dff0d8;
-            color: #3c763d;
-        }
-        .error {
-            background: #f2dede;
-            color: #a94442;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="dashboard-container">
     <div class="container">
         <h1>Welcome to Your Dashboard</h1>
         <div class="profile-section">
@@ -101,55 +26,89 @@
         </div>
         <div class="message" id="message"></div>
         <div class="button-group">
-            <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+            <button class="edit-btn" onclick="toggleEdit()">
+                <i class="fas fa-edit"></i> Edit Profile
+            </button>
+            <button class="save-btn" onclick="saveProfile()" style="display: none;">Save Changes</button>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <script>
-        // Check if user is logged in
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login';
-                return;
-            }
-            return token;
-        }
-
-        // Get user data from token
-        function getUserFromToken() {
-            const token = checkAuth();
-            if (!token) return null;
-
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-            } catch (error) {
-                console.error('Error parsing token:', error);
-                return null;
-            }
-        }
-
         // Load user data
-        function loadUserData() {
-            const userData = getUserFromToken();
-            if (userData) {
-                document.getElementById('firstName').value = userData.firstName || '';
-                document.getElementById('lastName').value = userData.lastName || '';
-                document.getElementById('username').value = userData.username || '';
+        async function loadUserData() {
+            try {
+                const response = await fetch('/get-profile');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('firstName').value = data.firstName || '';
+                    document.getElementById('lastName').value = data.lastName || '';
+                    document.getElementById('username').value = data.username || '';
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Toggle edit mode
+        function toggleEdit() {
+            const inputs = document.querySelectorAll('.profile-section input');
+            const editBtn = document.querySelector('.edit-btn');
+            const saveBtn = document.querySelector('.save-btn');
+            
+            inputs.forEach(input => {
+                input.readOnly = !input.readOnly;
+            });
+
+            if (inputs[0].readOnly) {
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Profile';
+                saveBtn.style.display = 'none';
+            } else {
+                editBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                saveBtn.style.display = 'inline-block';
             }
         }
 
         // Save profile
-        function saveProfile() {
+        async function saveProfile() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const username = document.getElementById('username').value;
             const messageDiv = document.getElementById('message');
-            messageDiv.textContent = 'Profile saved successfully!';
-            messageDiv.className = 'message success';
+
+            try {
+                const response = await fetch('/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = 'Profile updated successfully!';
+                    messageDiv.className = 'message success';
+                    toggleEdit(); // Switch back to view mode
+                } else {
+                    messageDiv.textContent = data.message || 'Failed to update profile';
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                messageDiv.textContent = 'An error occurred while updating profile';
+                messageDiv.className = 'message error';
+            }
+
             setTimeout(() => {
                 messageDiv.textContent = '';
                 messageDiv.className = 'message';
@@ -158,8 +117,14 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            fetch('/logout', { method: 'POST' })
+                .then(() => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                });
         }
 
         // Load user data when page loads
