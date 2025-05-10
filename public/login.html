@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      background: #f5f5dc;
+      color: #5a4a2d;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fffaf3;
+      padding: 2rem 2.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
+      min-width: 300px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #e0d8c3;
+      border-radius: 5px;
+      background: #f9f6ef;
+    }
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #e6dbc7;
+      color: #5a4a2d;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #d6c7a6;
+    }
+    .link {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      color: #5a4a2d;
+      text-decoration: none;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+    .message {
+      color: #b94a48;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" name="username" placeholder="Username" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Log In</button>
+      <div class="message" id="message"></div>
+    </form>
+    <a class="link" href="/register">Don't have an account? Register</a>
+  </div>
+  <script>
+    document.getElementById('loginForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username.value,
+          password: form.password.value
+        })
+      });
+      const data = await res.json();
+      const msg = document.getElementById('message');
+      if (res.ok) {
+        // Store the token
+        localStorage.setItem('token', data.token);
+        // Redirect to dashboard
+        window.location.href = '/dashboard';
+      } else {
+        msg.style.color = '#b94a48';
+        msg.textContent = data.message;
+      }
+    };
+  </script>
+</body>
+</html> 

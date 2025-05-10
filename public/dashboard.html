@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            background: #f5f5dc;
+            color: #5a4a2d;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fffaf3;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
+        }
+        .profile-section {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .profile-photo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e6dbc7;
+        }
+        .profile-info {
+            flex: 1;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e0d8c3;
+            border-radius: 5px;
+            background: #f9f6ef;
+        }
+        button {
+            padding: 0.7rem 1.5rem;
+            background: #e6dbc7;
+            color: #5a4a2d;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #d6c7a6;
+        }
+        .message {
+            color: #b94a48;
+            margin-bottom: 1rem;
+        }
+        .success {
+            color: #3c763d;
+        }
+        #previewImage {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <div class="profile-section">
+            <div>
+                <img id="profilePhoto" class="profile-photo" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="Profile Photo">
+                <form id="photoForm" class="form-group">
+                    <input type="file" id="photoInput" accept="image/*" required>
+                    <button type="submit">Upload Photo</button>
+                </form>
+            </div>
+            <div class="profile-info">
+                <h2>Profile Information</h2>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="displayName">Display Name:</label>
+                        <input type="text" id="displayName" name="displayName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Bio:</label>
+                        <input type="text" id="bio" name="bio">
+                    </div>
+                    <button type="submit">Save Profile</button>
+                </form>
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPhotoUrl = '';
+
+        // Preview image before upload
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profilePhoto').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Load profile data
+        async function loadProfile() {
+            try {
+                const response = await fetch('/profile');
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('displayName').value = data.display_name || '';
+                    document.getElementById('bio').value = data.bio || '';
+                    if (data.photo_url) {
+                        document.getElementById('profilePhoto').src = data.photo_url;
+                        currentPhotoUrl = data.photo_url;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        // Handle photo upload
+        document.getElementById('photoForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('photoInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            try {
+                const response = await fetch('/upload-photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentPhotoUrl = data.photoUrl;
+                    document.getElementById('profilePhoto').src = data.photoUrl;
+                    document.getElementById('message').textContent = 'Photo uploaded successfully!';
+                    document.getElementById('message').className = 'message success';
+                    
+                    // Save profile with new photo URL
+                    await saveProfile();
+                } else {
+                    document.getElementById('message').textContent = data.message;
+                    document.getElementById('message').className = 'message';
+                }
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                document.getElementById('message').textContent = 'Error uploading photo';
+                document.getElementById('message').className = 'message';
+            }
+        };
+
+        // Save profile function
+        async function saveProfile() {
+            const formData = {
+                display_name: document.getElementById('displayName').value,
+                bio: document.getElementById('bio').value,
+                photo_url: currentPhotoUrl
+            };
+
+            try {
+                const response = await fetch('/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                const msg = document.getElementById('message');
+                if (response.ok) {
+                    msg.textContent = 'Profile updated successfully!';
+                    msg.className = 'message success';
+                } else {
+                    msg.textContent = data.message;
+                    msg.className = 'message';
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                document.getElementById('message').textContent = 'Error updating profile';
+                document.getElementById('message').className = 'message';
+            }
+        }
+
+        // Handle profile form submission
+        document.getElementById('profileForm').onsubmit = async function(e) {
+            e.preventDefault();
+            await saveProfile();
+        };
+
+        // Load profile when page loads
+        loadProfile();
+    </script>
+</body>
+</html> 
