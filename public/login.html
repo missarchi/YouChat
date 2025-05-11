@@ -10,13 +10,32 @@
   <div class="container">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text" name="username" placeholder="Username" required />
-      <input type="password" name="password" placeholder="Password" required />
+      <input type="text" name="username" placeholder="Username" required autocomplete="username" />
+      <input type="password" name="password" placeholder="Password" required autocomplete="current-password" />
       <button type="submit">Log In</button>
       <div class="message" id="message"></div>
     </form>
-    <a class="link" href="/register">Don't have an account? Register</a>
+    <div class="links">
+      <a class="link" href="/register">Don't have an account? Register</a>
+      <a class="link" href="#" onclick="showForgotPassword()">Forgot Password?</a>
+    </div>
   </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeForgotPassword()">&times;</span>
+      <h2>Reset Password</h2>
+      <form id="forgotPasswordForm">
+        <input type="text" name="username" placeholder="Username" required autocomplete="username" />
+        <input type="password" name="newPassword" placeholder="New Password" required autocomplete="new-password" />
+        <input type="password" name="confirmPassword" placeholder="Confirm New Password" required autocomplete="new-password" />
+        <button type="submit">Reset Password</button>
+        <div class="message" id="forgotPasswordMessage"></div>
+      </form>
+    </div>
+  </div>
+
   <script>
     document.getElementById('loginForm').onsubmit = async function(e) {
       e.preventDefault();
@@ -41,6 +60,66 @@
         msg.textContent = data.message;
       }
     };
+
+    // Forgot Password Functions
+    function showForgotPassword() {
+      document.getElementById('forgotPasswordModal').style.display = 'block';
+    }
+
+    function closeForgotPassword() {
+      document.getElementById('forgotPasswordModal').style.display = 'none';
+      document.getElementById('forgotPasswordForm').reset();
+      document.getElementById('forgotPasswordMessage').textContent = '';
+    }
+
+    document.getElementById('forgotPasswordForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const messageDiv = document.getElementById('forgotPasswordMessage');
+
+      // Check if passwords match
+      if (form.newPassword.value !== form.confirmPassword.value) {
+        messageDiv.style.color = '#b94a48';
+        messageDiv.textContent = 'Passwords do not match';
+        return;
+      }
+
+      try {
+        const res = await fetch('/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: form.username.value,
+            newPassword: form.newPassword.value
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          messageDiv.style.color = '#3c763d';
+          messageDiv.textContent = 'Password reset successful. Please login with your new password.';
+          setTimeout(() => {
+            closeForgotPassword();
+          }, 2000);
+        } else {
+          messageDiv.style.color = '#b94a48';
+          messageDiv.textContent = data.message;
+        }
+      } catch (error) {
+        console.error('Password reset error:', error);
+        messageDiv.style.color = '#b94a48';
+        messageDiv.textContent = 'An error occurred. Please try again.';
+      }
+    };
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('forgotPasswordModal');
+      if (event.target === modal) {
+        closeForgotPassword();
+      }
+    }
   </script>
 </body>
 </html> 

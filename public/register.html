@@ -23,16 +23,10 @@
     document.getElementById('registerForm').onsubmit = async function(e) {
       e.preventDefault();
       const form = e.target;
+      const msg = document.getElementById('message');
       
-      // Log the form data being sent
-      console.log('Registration form data:', {
-        firstName: form.firstName.value,
-        lastName: form.lastName.value,
-        username: form.username.value
-      });
-
       try {
-        const res = await fetch('/register', {
+        const response = await fetch('/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -43,55 +37,29 @@
           })
         });
 
-        console.log('Registration response status:', res.status);
-        const data = await res.json();
-        console.log('Registration response data:', data);
-
-        const msg = document.getElementById('message');
+        const data = await response.json();
+        console.log('Registration response:', data); // Debug log
         
-        if (res.ok) {
+        if (response.ok) {
           msg.style.color = '#3c763d';
           msg.textContent = data.message;
           
-          // Store the token in localStorage
-          if (data.token) {
-            console.log('Storing token in localStorage');
-            localStorage.setItem('token', data.token);
-            
-            // Verify the token was stored
-            const storedToken = localStorage.getItem('token');
-            console.log('Token stored successfully:', !!storedToken);
-            
-            // Decode and verify token contents
-            try {
-              const base64Url = storedToken.split('.')[1];
-              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-              const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-              }).join(''));
-              const userData = JSON.parse(jsonPayload);
-              console.log('Token contents:', userData);
-              console.log('First Name in token:', userData.firstName);
-              console.log('Last Name in token:', userData.lastName);
-            } catch (error) {
-              console.error('Error decoding token:', error);
-            }
-
+          if (data.user) {
+            console.log('User data received:', data.user); // Debug log
+            localStorage.setItem('user', JSON.stringify(data.user));
             // Redirect to dashboard after successful registration
             window.location.href = '/dashboard';
           } else {
-            console.error('No token received in registration response');
+            console.error('No user data in response:', data); // Debug log
             msg.style.color = '#b94a48';
-            msg.textContent = 'Registration successful but no token received';
+            msg.textContent = 'Registration successful but no user data received';
           }
         } else {
           msg.style.color = '#b94a48';
-          msg.textContent = data.message;
-          console.error('Registration failed:', data.message);
+          msg.textContent = data.message || 'Registration failed';
         }
       } catch (error) {
         console.error('Registration error:', error);
-        const msg = document.getElementById('message');
         msg.style.color = '#b94a48';
         msg.textContent = 'An error occurred during registration';
       }

@@ -48,12 +48,19 @@
     background: #d6c7a6;
 }
 
+.login-container .links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
 .login-container .link {
     display: block;
     text-align: center;
-    margin-top: 1rem;
     color: #5a4a2d;
     text-decoration: none;
+    font-size: 0.9rem;
 }
 
 .login-container .link:hover {
@@ -64,4 +71,85 @@
     color: #b94a48;
     text-align: center;
     margin-bottom: 1rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fffaf3;
+    margin: 15% auto;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(90, 74, 45, 0.08);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    font-size: 1.5rem;
+    color: #5a4a2d;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #5a4a2d;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="password"] {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e0d8c3;
+    border-radius: 5px;
+    background: #f9f6ef;
+}
+
+.modal-content button {
+    width: 100%;
+    padding: 0.7rem;
+    background: #e6dbc7;
+    color: #5a4a2d;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-content button:hover {
+    background: #d6c7a6;
+}
+
+.modal-content .message {
+    color: #b94a48;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+@media screen and (max-width: 480px) {
+    .modal-content {
+        margin: 10% auto;
+        padding: 1.5rem;
+    }
 } 
